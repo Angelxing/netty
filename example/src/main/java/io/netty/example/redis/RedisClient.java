@@ -34,7 +34,25 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 /**
- * Simple Redis client that demonstrates Redis commands against a Redis server.
+ * 这段代码是一个使用Netty框架实现的Redis客户端程序的主函数。主函数中的代码主要完成以下几个步骤：
+ *
+ * 创建一个NioEventLoopGroup对象，用于处理网络事件。
+ *
+ * 创建一个Bootstrap对象，用于启动客户端。
+ *
+ * 设置Bootstrap对象的参数，包括使用NioSocketChannel作为通道类型、设置ChannelInitializer对象等。
+ *
+ * 在ChannelInitializer对象的initChannel()方法中，设置ChannelPipeline对象，添加RedisDecoder、RedisBulkStringAggregator、RedisArrayAggregator、RedisEncoder和RedisClientHandler等ChannelHandler。
+ *
+ * 调用Bootstrap对象的connect()方法，连接到Redis服务器。
+ *
+ * 调用sync()方法，等待连接完成。
+ *
+ * 获取Channel对象，用于发送和接收数据。
+ * <p>
+ * 在这段代码中，RedisDecoder、RedisBulkStringAggregator、RedisArrayAggregator、RedisEncoder和RedisClientHandler都是自定义的ChannelHandler，用于处理Redis协议的编解码和业务逻辑。其中，RedisDecoder用于将字节数据解码为Redis消息对象，RedisBulkStringAggregator和RedisArrayAggregator用于将多个Redis消息合并为一个完整的消息，RedisEncoder用于将Redis消息对象编码为字节数据，RedisClientHandler用于处理Redis客户端的业务逻辑。
+
+ * 通过使用Netty框架，可以方便地实现各种类型的网络应用程序，包括客户端和服务器端。Netty框架提供了丰富的组件和API，可以大大简化网络编程的复杂度，提高开发效率和程序性能。
  */
 public class RedisClient {
     private static final String HOST = System.getProperty("host", "127.0.0.1");
@@ -51,7 +69,17 @@ public class RedisClient {
                  protected void initChannel(SocketChannel ch) throws Exception {
                      ChannelPipeline p = ch.pipeline();
                      p.addLast(new RedisDecoder());
+                     /**
+                      * RedisBulkStringAggregator用于将多个Bulk String类型的消息合并为一个完整的消息。
+                      * 在Redis协议中，Bulk String类型的消息是以"$"开头，后面跟着一个数字表示消息的长度，再后面跟着实际的消息内容。
+                      * 由于Bulk String类型的消息可能会被拆分成多个数据包进行传输，因此需要使用RedisBulkStringAggregator将多个数据包合并为一个完整的消息。
+                      */
                      p.addLast(new RedisBulkStringAggregator());
+                     /**
+                      * RedisArrayAggregator用于将多个Array类型的消息合并为一个完整的消息。
+                      * 在Redis协议中，Array类型的消息是以"*"开头，后面跟着一个数字表示消息中包含的元素个数，再后面跟着实际的消息内容。
+                      * 由于Array类型的消息也可能会被拆分成多个数据包进行传输，因此需要使用RedisArrayAggregator将多个数据包合并为一个完整的消息。
+                      */
                      p.addLast(new RedisArrayAggregator());
                      p.addLast(new RedisEncoder());
                      p.addLast(new RedisClientHandler());
